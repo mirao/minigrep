@@ -1,14 +1,6 @@
 use std::error::Error;
 use std::fs;
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(config.filename)?;
-
-    println!("With text:\n{}", contents);
-
-    Ok(())
-}
-
 #[derive(PartialEq, Debug)]
 pub struct Config {
     pub query: String,
@@ -28,9 +20,29 @@ impl Config {
     }
 }
 
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+    let contents = fs::read_to_string(config.filename)?;
+
+    for line in search(&config.query, &contents) {
+        println!("{}", line);
+    }
+
+    Ok(())
+}
+
+pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+    let mut results = Vec::new();
+    for line in contents.lines() {
+        if line.contains(query) {
+            results.push(line)
+        }
+    }
+    results
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{run, Config};
+    use super::*;
 
     #[test]
     fn config_new_valid_input() {
@@ -87,5 +99,45 @@ mod tests {
             query: "nobody".to_string(),
         };
         assert_eq!(run(config).unwrap(), ());
+    }
+
+    #[test]
+    fn search_no_result() {
+        let query = "ductivity";
+        let contents = "\
+        Rust:\n\
+        safe, fast, productive.\n\
+        Pick three.";
+
+        // Empty string expected
+        assert_eq!(search(query, contents), vec![] as Vec<&str>);
+        // Other syntax alternatives
+        assert_eq!(search(query, contents), <Vec<&str>>::new());
+        assert_eq!(search(query, contents), Vec::new() as Vec<&str>);
+    }
+
+    #[test]
+    fn search_one_result() {
+        let query = "duct";
+        let contents = "\
+        Rust:\n\
+        safe, fast, productive.\n\
+        Pick three.";
+
+        assert_eq!(search(query, contents), vec!["safe, fast, productive."]);
+    }
+
+    #[test]
+    fn search_more_results() {
+        let query = "st";
+        let contents = "\
+            Rust:\n\
+            safe, fast, productive.\n\
+            Pick three.";
+
+        assert_eq!(
+            search(query, contents),
+            vec!["Rust:", "safe, fast, productive."]
+        );
     }
 }
