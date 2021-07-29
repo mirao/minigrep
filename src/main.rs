@@ -3,6 +3,11 @@ use std::process;
 
 use minigrep::*;
 
+/// How to run:
+/// ```bash
+/// $ cargo run to poem.txt
+/// $ CASE_INSENSITIVE=true cargo run to poem.txt`
+/// ```
 fn main() {
     // --snip--
 
