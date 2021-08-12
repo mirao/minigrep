@@ -9,13 +9,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+    /// `args: env::Args` wouldn't allow unit testing, therefore generic Iterator is used
+    pub fn new<T>(mut args: T) -> Result<Config, &'static str>
+    where
+        T: Iterator<Item = String>,
+    {
+        args.next();
 
-        let query = args[1].clone();
-        let filename = args[2].clone();
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file name"),
+        };
 
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
@@ -67,15 +76,14 @@ pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a st
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
     fn config_new_valid_input() {
-        let args = &[
-            "minigrep".to_string(),
-            "nobody".to_string(),
-            "poem.txt".to_string(),
-        ];
+        let args = ["minigrep", "nobody", "poem.txt"]
+            .iter()
+            .map(|s| s.to_string());
         assert_eq!(
             Config::new(args),
             Ok(Config {
@@ -87,9 +95,18 @@ mod tests {
     }
 
     #[test]
-    fn config_new_not_enough_arguments() {
+    fn config_new_missing_query() {
+        let vec: Vec<_> = vec!["minigrep".to_string()];
+        assert_eq!(
+            Config::new(vec.into_iter()),
+            Err("Didn't get a query string")
+        );
+    }
+
+    #[test]
+    fn config_new_missing_file_name() {
         let vec: Vec<_> = vec!["minigrep".to_string(), "nobody".to_string()];
-        assert_eq!(Config::new(&vec), Err("not enough arguments"));
+        assert_eq!(Config::new(vec.into_iter()), Err("Didn't get a file name"));
     }
 
     #[test]
