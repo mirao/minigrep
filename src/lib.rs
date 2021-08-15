@@ -1,3 +1,6 @@
+//! # Minigrep
+//! Config and actions for searching of text in file
+
 use std::error::Error;
 use std::{env, fs};
 
@@ -9,7 +12,8 @@ pub struct Config {
 }
 
 impl Config {
-    /// `args: env::Args` wouldn't allow unit testing, therefore generic Iterator is used
+    /// Creates a configuration from command line arguments \
+    /// Note that `args: env::Args` wouldn't allow unit testing, therefore generic Iterator is used: `args: T`
     pub fn new<T>(mut args: T) -> Result<Config, &'static str>
     where
         T: Iterator<Item = String>,
@@ -36,6 +40,17 @@ impl Config {
     }
 }
 
+/// Main function passing query and file content into search functions
+/// # Example
+/// ```
+/// use minigrep::{Config, run};
+/// let config = Config {
+/// filename: "src/test_data/valid.txt".to_string(),
+///     query: "nobody".to_string(),
+///     case_sensitive: true,
+/// };
+/// assert_eq!(run(config).unwrap(), ());
+/// ```
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
 
@@ -52,6 +67,20 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Case sensitive substring search for query in contents \
+/// It prints matching lines
+/// # Example
+/// ```
+/// use minigrep::search;
+/// let query = "st";
+/// let contents = "\
+///     RUST:\n\
+///     safe, fast, productive.\n\
+///     Pick three.\n\
+///     Duct tape.";
+///
+/// assert_eq!(search(query, contents), vec!["safe, fast, productive."]);
+/// ```
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     contents
         .lines()
@@ -59,6 +88,23 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
         .collect()
 }
 
+/// Case insensitive substring search for query in contents \
+/// It prints matching lines
+/// # Example
+/// ```
+/// use minigrep::search_case_insensitive;
+/// let query = "rUsT";
+/// let contents = "\
+///    Rust:\n\
+///    safe, fast, productive.\n\
+///    Pick three.\n\
+///    Trust me.";
+///
+/// assert_eq!(
+///     search_case_insensitive(query, contents),
+///     vec!["Rust:", "Trust me."]
+/// );
+/// ```
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
     contents
@@ -156,9 +202,9 @@ mod tests {
 
     #[test]
     fn search_case_sensitive_one_result() {
-        let query = "duct";
+        let query = "st";
         let contents = "\
-        Rust:\n\
+        RUST:\n\
         safe, fast, productive.\n\
         Pick three.\n\
         Duct tape.";

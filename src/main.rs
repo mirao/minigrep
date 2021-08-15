@@ -5,8 +5,8 @@ use minigrep::*;
 
 /// How to run:
 /// ```bash
-/// $ cargo run to poem.txt
-/// $ CASE_INSENSITIVE=true cargo run to poem.txt`
+/// $ cargo run nobody poem.txt
+/// $ CASE_INSENSITIVE=true cargo run are poem.txt`
 /// ```
 fn main() {
     let config = Config::new(env::args()).unwrap_or_else(|err| {
